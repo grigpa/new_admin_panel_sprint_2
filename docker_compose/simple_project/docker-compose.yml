@@ -6,12 +6,30 @@ services:
       - "8000"
     env_file:
       - ./.env
-
-  nginx:
-    image: nginx:latest
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./configs:/etc/nginx/conf.d:ro
+      - static_volume:/app/static
+      - media_volume:/app/media
+    command: >
+      bash -c "gunicorn --version && python manage.py collectstatic --noinput && python manage.py migrate  && gunicorn -b 0.0.0.0:8000 wsgi:application"
+
+#  nginx:
+#    image: nginx:latest
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#      - ./configs:/etc/nginx/conf.d:ro
+#    depends_on:
+#      - service
+#    ports:
+#      - "80:80"
+#
+  nginx:
+    build:
+      dockerfile: Dockerfile
+      context: nginx
+    container_name: movies_nginx
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
     depends_on:
       - service
     ports:
@@ -19,8 +37,21 @@ services:
 
   theatre-db:
 #    Тут необходимо описать недостающие элементы
+    build:
+      context: movies_db
+      dockerfile: Dockerfile
+    image: movies_db
+    container_name: db_postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
     volumes:
       - ./database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+      - ~/.pg/pg_data/movies_2_36:/var/lib/postgresql/data
 
+volumes:
+  static_volume:
+  media_volume:
 
 

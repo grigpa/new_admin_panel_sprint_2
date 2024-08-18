@@ -24,4 +24,5 @@ COPY . .
 
 EXPOSE 8000
 
-ENTRYPOINT ["uwsgi", "--strict", "--ini", "uwsgi.ini"]
+#ENTRYPOINT ["uwsgi", "--strict", "--ini", "uwsgi.ini"]
+CMD ["gunicorn","-b","0.0.0.0:8001","wsgi:application"]
